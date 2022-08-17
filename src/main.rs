@@ -34,6 +34,9 @@ struct Apps {
     /// Print debug info
     #[clap(short)]
     debug: bool,
+    
+    #[clap(short, long)]
+    force: bool,
 
     /// Fetch detailed data for n applicants else all applicants
     zids: Vec<String>,
@@ -71,7 +74,7 @@ async fn main() {
             };
 
             if t.zids.is_empty() {
-                dump_all_applications(&client, &args).await;
+                dump_all_applications(&client, &args, &t.force).await;
             } else {
                 dump_applications(&client, &args, &t.zids).await;
             }
@@ -107,18 +110,26 @@ async fn dump_applications(client: &Client, args: &AppsArgs, zids: &[String]) {
     }
 }
 
-async fn dump_all_applications(client: &Client, args: &AppsArgs) {
+async fn dump_all_applications(client: &Client, args: &AppsArgs, force: &bool) {
     // only works for term 1 lol
-    let res = client.get(format!("https://talloc.web.cse.unsw.edu.au/api/v1/terms/{}/applications", TERM))
-                .header("x-jwt-auth", args.jwt.as_str())
-                .send()
-                .await
-                .expect("All application requst failed")
-                .text()
-                .await
-                .expect("could not unwrap req into text");
     
-     println!("{}", res);
+    let res = client.get(format!("https://talloc.web.cse.unsw.edu.au/api/v1/terms/{}/applications", TERM))
+                .header("x-jwt-auth", args.jwt.as_str());
+
+    if *force {
+        res = res.header("x-apicache-bypass", "true");        
+    }
+   
+    // todo
+    res = res
+            .send()
+            .await
+            .expect("All application requst failed")
+            .text()
+            .await
+            .expect("could not unwrap req into text");
+     
+    println!("{}", res);
 }
 
 async fn get_jwt() -> String {
