@@ -1,8 +1,3 @@
-
-// (Full example with detailed comments in examples/01d_quick_example.rs)
-//
-// This example demonstrates clap's full 'custom derive' style of creating arguments which is the
-// simplest method of use, but sacrifices some flexibility.
 use clap::{AppSettings, Clap};
 use futures::{StreamExt, stream};
 use tokio::fs; 
@@ -113,7 +108,7 @@ async fn dump_applications(client: &Client, args: &AppsArgs, zids: &[String]) {
 async fn dump_all_applications(client: &Client, args: &AppsArgs, force: &bool) {
     // only works for term 1 lol
     
-    let res = client.get(format!("https://talloc.web.cse.unsw.edu.au/api/v1/terms/{}/applications", TERM))
+    let mut res = client.get(format!("https://talloc.web.cse.unsw.edu.au/api/v1/terms/{}/applications", TERM))
                 .header("x-jwt-auth", args.jwt.as_str());
 
     if *force {
@@ -121,7 +116,7 @@ async fn dump_all_applications(client: &Client, args: &AppsArgs, force: &bool) {
     }
    
     // todo
-    res = res
+    let result = res
             .send()
             .await
             .expect("All application requst failed")
@@ -129,7 +124,7 @@ async fn dump_all_applications(client: &Client, args: &AppsArgs, force: &bool) {
             .await
             .expect("could not unwrap req into text");
      
-    println!("{}", res);
+    println!("{}", result);
 }
 
 async fn get_jwt() -> String {
